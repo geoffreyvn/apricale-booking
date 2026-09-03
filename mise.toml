@@ -1,0 +1,46 @@
+# C'est ICI, et nulle part ailleurs, que la technologie du projet est déclarée.
+# AGENTS.md, la CI et les agents appellent tous `mise run <tâche>`.
+
+[tools]
+node = "20"
+
+[tasks.setup]
+description = "Installer les dépendances"
+run = "npm ci || npm install"
+
+[tasks.build]
+run = "npm run build"
+
+[tasks.test]
+description = "Suite complète"
+run = "npm run test"
+
+[tasks.lint]
+run = "npm run lint"
+
+[tasks.typecheck]
+run = "npm run typecheck"
+
+[tasks.security]
+description = "Secrets, vulnérabilités de dépendances, analyse statique"
+run = """
+set -e
+echo '— audit des dépendances (toujours exécuté) —'
+npm audit --audit-level=high || { echo 'Vulnérabilités haute/critique détectées'; exit 1; }
+echo '— recherche de secrets —'
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks detect --no-banner --redact
+else
+  echo 'gitleaks absent — installe-le pour activer ce contrôle (constitution, principe IV)'
+fi
+echo '— vulnérabilités connues (OSV) —'
+if command -v osv-scanner >/dev/null 2>&1; then
+  osv-scanner --lockfile package-lock.json
+else
+  echo 'osv-scanner absent — contrôle partiel'
+fi
+"""
+
+[tasks.verify]
+description = "Toutes les portes de qualité, dans l'ordre de la constitution"
+depends = ["lint", "typecheck", "test", "security"]

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "//": [
+    "Fournisseur unique : la passerelle LiteLLM (ADR-001).",
+    "OpenCode ne conna\u00eet AUCUN nom de mod\u00e8le r\u00e9el \u2014 uniquement les alias factory-*.",
+    "La cl\u00e9 est lue dans l'environnement via {env:...} : aucun secret dans ce fichier.",
+    "Elle est fournie par la fonction shell 'oc', qui charge secrets/virtual-keys.env",
+    "dans un sous-shell \u2014 la cl\u00e9 ne pollue jamais l'environnement global."
+  ],
+  "provider": {
+    "litellm": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Factory (LiteLLM)",
+      "options": {
+        "baseURL": "http://127.0.0.1:4000/v1",
+        "apiKey": "{env:LITELLM_KEY_OPENCODE}"
+      },
+      "models": {
+        "factory-architecture": {
+          "name": "Factory - architecture (raisonnement lourd)"
+        },
+        "factory-build": {
+          "name": "Factory - build (volume)"
+        },
+        "factory-fast": {
+          "name": "Factory - fast (bon marche)"
+        }
+      }
+    }
+  },
+  "model": "litellm/factory-build"
+}
