@@ -2,7 +2,13 @@
 # AGENTS.md, la CI et les agents appellent tous `mise run <tâche>`.
 
 [tools]
-node = "20"
+gitleaks = "8.30.1"
+# Node 24 : LTS active en 2026, supportee jusqu en 2028.
+# La 20 est en fin de vie depuis avril 2026 — inacceptable pour un socle
+# dont la porte securite bloque sur les vulnerabilites (ADR-002).
+# Exigence de vitest 5 : ^22.12 || ^24 || >=26.
+node = "24"
+osv-scanner = "2.5.1"
 
 [tasks.setup]
 description = "Installer les dépendances"
@@ -22,23 +28,20 @@ run = "npm run lint"
 run = "npm run typecheck"
 
 [tasks.security]
-description = "Secrets, vulnérabilités de dépendances, analyse statique"
+description = "Secrets (gitleaks) et vulnerabilites connues (OSV)"
 run = """
-set -e
-echo '— audit des dépendances (toujours exécuté) —'
-npm audit --audit-level=high || { echo 'Vulnérabilités haute/critique détectées'; exit 1; }
-echo '— recherche de secrets —'
-if command -v gitleaks >/dev/null 2>&1; then
-  gitleaks detect --no-banner --redact
-else
-  echo 'gitleaks absent — installe-le pour activer ce contrôle (constitution, principe IV)'
-fi
-echo '— vulnérabilités connues (OSV) —'
-if command -v osv-scanner >/dev/null 2>&1; then
-  osv-scanner --lockfile package-lock.json
-else
-  echo 'osv-scanner absent — contrôle partiel'
-fi
+set -eu
+# npm audit retire le 2026-09-04 : son point d'acces pend (>60 s) alors que
+# npm ping repond en 400 ms. osv-scanner couvre le meme terrain, en local,
+# a partir du lockfile, et agrege les avis npm.
+
+echo "— recherche de secrets (historique Git) —"
+gitleaks git . --no-banner --redact
+
+echo "— vulnerabilites connues des dependances (OSV) —"
+osv-scanner scan source -r .
+
+echo "Controles de securite : OK"
 """
 
 [tasks.verify]
