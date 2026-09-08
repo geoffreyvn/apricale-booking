@@ -28,3 +28,4 @@ mise run verify     # lint + typecheck + test + sécurité
 Ce dépôt suit la constitution de la Software Factory IA, copiée dans
 `.specify/memory/constitution.md`. **Sa source de vérité est le dépôt
 `factory-workspace`** : tout amendement s'y fait d'abord, puis se propage ici.
+
