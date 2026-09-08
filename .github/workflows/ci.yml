@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+
+    steps:
+      # fetch-depth 0 est indispensable : gitleaks scanne l'historique complet,
+      # et le controle de taille de diff a besoin du commit de base.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Identifiant de spec dans le titre de la PR
+        if: github.event_name == 'pull_request'
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if echo "$TITLE" | grep -Eq 'SF-[0-9]+'; then
+            echo "Identifiant trouve dans : $TITLE"
+          else
+            echo "::error::Titre de PR sans identifiant SF-xxx : $TITLE"
+            exit 1
+          fi
+
+      # mise installe exactement les versions declarees dans mise.toml :
+      # node, gitleaks, osv-scanner. La CI ne peut pas diverger du poste.
+      - uses: jdx/mise-action@v4
+        with:
+          version: 2026.9.1
+          install: true
+          cache: true
+
+      - name: Versions installees
+        run: mise ls --current
+
+      # Les quatre portes de la constitution, appelees exactement comme en local.
+      - run: mise run setup
+      - run: mise run lint
+      - run: mise run typecheck
+      - run: mise run test
+      - run: mise run security
+
+      - name: Taille du diff
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: |
+          # Constitution, principe VI : lockfiles, fichiers generes et jeux de
+          # donnees ne comptent pas dans le decompte relisible.
+          LINES=$(git diff --numstat "$BASE_SHA"...HEAD \
+                  | grep -vE '(package-lock\.json|\.lock$|^dist/|^coverage/|\.snap$)' \
+                  | awk '{ add += $1 } END { print add + 0 }')
+          echo "Lignes ajoutees, hors fichiers exclus : $LINES"
+
+          if echo "$LABELS" | grep -q 'large-pr-justified'; then
+            echo "::notice::Derogation large-pr-justified active ($LINES lignes)."
+            exit 0
+          fi
+          if [ "$LINES" -gt 800 ]; then
+            echo "::error::$LINES lignes ajoutees (plus de 800). Redecouper la tache, ou apposer le label large-pr-justified avec une justification ecrite."
+            exit 1
+          fi
+          if [ "$LINES" -gt 400 ]; then
+            echo "::warning::$LINES lignes ajoutees (plus de 400) — au-dela, la revue humaine se degrade."
+          fi
