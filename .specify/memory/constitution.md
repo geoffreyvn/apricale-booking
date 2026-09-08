@@ -26,11 +26,23 @@ RAPPORT D'IMPACT DE SYNCHRONISATION
 - Documents dépendants à vérifier lors d'un prochain passage : `AGENTS.md`,
   `.github/workflows/`, `docs/adr/`, `specs/_TEMPLATE.md` (lus à l'exécution,
   non modifiés par cet amendement).
+
+AMENDEMENT DU 2026-09-08 — version 1.0.0 → 1.1.0 (MINOR)
+- Portée étendue aux dépôts produits par la factory.
+- Principe VI : les tests d'acceptation dérivés d'une spec validée et référencée
+  critère par critère sortent du plafond de diff, sous trois conditions cumulatives.
+  Motif : découvert au premier usage réel, sur SF-001 (748 lignes de tests).
+- Principe III : SF-000 réservé aux pull requests de gouvernance et de maintenance.
+  Motif : une PR d'amendement ne se rattache à aucune spécification et échouait
+  sur le contrôle d'identifiant de la CI.
 -->
 
 # Constitution du projet Software Factory IA
 
-Cette constitution régit le dépôt `factory-workspace`, socle de la Software Factory IA.
+Cette constitution régit le dépôt `factory-workspace`, socle de la Software Factory IA,
+ainsi que tous les dépôts qu'elle produit, dont `apricale-booking`. Une copie en est
+déposée dans chaque dépôt produit ; la source de vérité demeure `factory-workspace`,
+où tout amendement est adopté avant d'être propagé.
 Elle prévaut sur toute autre pratique, habitude ou consigne, y compris sur les
 instructions données à un agent en cours de session. Les sept principes ci-dessous
 sont non négociables.
@@ -90,6 +102,10 @@ L'identifiant `SF-xxx` est le fil ininterrompu qui relie une intention à sa liv
   branche `feat/SF-042-description-courte`, commit `feat(scope): sujet (SF-042)`.
 - Un artefact sans identifiant `SF-xxx` rattachable à une spécification existante
   n'est pas intégrable.
+- L'identifiant `SF-000` est réservé aux pull requests de gouvernance et de maintenance
+  — amendement de la présente constitution, montée de dépendances, correction
+  d'outillage — qui ne se rattachent à aucune spécification fonctionnelle. Toutes les
+  autres règles leur restent applicables.
 
 Vérification : à partir d'une entrée de note de version, on remonte mécaniquement à la
 pull request, aux commits, à la branche et à la spécification, et inversement.
@@ -138,6 +154,14 @@ inexistant est une porte d'entrée directe pour un paquet malveillant homonyme.
   (échafaudage initial, migration outillée). Elle exige le label `large-pr-justified`,
   une justification écrite dans la pull request, et laisse une trace vérifiable.
   Elle ne s'applique jamais à du code métier.
+- Les lignes de `tests/acceptance/**` ne comptent pas dans le plafond SI ET SEULEMENT
+  SI trois conditions sont réunies : la spécification dont elles dérivent a été validée
+  par un humain ; chaque test porte dans son intitulé la référence du critère qu'il
+  couvre ; la pull request ne modifie aucun test d'acceptation préexistant. À défaut
+  d'une seule de ces conditions, elles comptent intégralement.
+  Rationale : la justesse de ces lignes s'établit par pointage de couverture vers un
+  artefact déjà validé, non par lecture sémantique. Le plafond protège la relecture,
+  et un pointage n'est pas une relecture.
 - Le seuil n'est pas contournable par regroupement, par reformatage massif ni par
   exclusion de fichiers de la revue.
 
@@ -242,4 +266,4 @@ rapport d'impact de synchronisation en tête de fichier.
 - Toute complexité ajoutée DOIT être justifiée par écrit dans la pull request qui
   l'introduit.
 
-**Version**: 1.0.0 | **Ratifiée le**: 2026-09-03 | **Dernier amendement**: 2026-09-03
+**Version**: 1.1.0 | **Ratifiée le**: 2026-09-03 | **Dernier amendement**: 2026-09-08
