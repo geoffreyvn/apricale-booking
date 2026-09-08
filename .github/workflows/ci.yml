@@ -66,9 +66,10 @@ jobs:
           # La CI ne verifie que l'exclusion de chemin ; les deux autres conditions
           # de l'amendement (spec validee, critere reference par test) relevent
           # de la revue humaine.
+          # awk filtre la 3e colonne (le chemin). grep sur la ligne entiere
+          # ne marchait pas : numstat commence par les compteurs, pas le chemin.
           LINES=$(git diff --numstat "$BASE_SHA"...HEAD \
-                  | grep -vE '(package-lock\.json|\.lock$|^dist/|^coverage/|\.snap$|^tests/acceptance/)' \
-                  | awk '{ add += $1 } END { print add + 0 }')
+                  | awk '$3 !~ /(package-lock\.json|\.lock$|^dist\/|^coverage\/|\.snap$|^tests\/acceptance\/)/ { add += $1 } END { print add + 0 }')
           echo "Lignes ajoutees, hors fichiers exclus : $LINES"
 
           if echo "$LABELS" | grep -q 'large-pr-justified'; then
