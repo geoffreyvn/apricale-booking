@@ -61,10 +61,13 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
         run: |
-          # Constitution, principe VI : lockfiles, fichiers generes et jeux de
-          # donnees ne comptent pas dans le decompte relisible.
+          # Constitution, principe VI (amendement v1.1.0) : lockfiles, fichiers
+          # generes, jeux de donnees ET tests d'acceptation ne comptent pas.
+          # La CI ne verifie que l'exclusion de chemin ; les deux autres conditions
+          # de l'amendement (spec validee, critere reference par test) relevent
+          # de la revue humaine.
           LINES=$(git diff --numstat "$BASE_SHA"...HEAD \
-                  | grep -vE '(package-lock\.json|\.lock$|^dist/|^coverage/|\.snap$)' \
+                  | grep -vE '(package-lock\.json|\.lock$|^dist/|^coverage/|\.snap$|^tests/acceptance/)' \
                   | awk '{ add += $1 } END { print add + 0 }')
           echo "Lignes ajoutees, hors fichiers exclus : $LINES"
 
